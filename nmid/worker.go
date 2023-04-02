@@ -1,11 +1,11 @@
 package nmid
 
 import (
+	"douyin-grab/constv"
 	"douyin-grab/grab"
 	"douyin-grab/pkg/logger"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/HughNian/nmid/pkg/model"
 	wor "github.com/HughNian/nmid/pkg/worker"
@@ -15,11 +15,11 @@ import (
 const WorkerName = "DOUYIN-GRAB"
 
 func RunWorker() {
-	nmidSerAddr := os.Getenv("NMID_SERVER_HOST") + ":" + os.Getenv("NMID_SERVER_PORT")
+	nmidSerAddr := constv.NmidServerHost + ":" + constv.NmidServerPort
 	worker := wor.NewWorker().SetWorkerName(WorkerName)
 	err := worker.AddServer("tcp", nmidSerAddr)
 	if err != nil {
-		logger.Error("worker init error %s", err)
+		logger.Error("工作程序初始化异常: %s", err)
 		worker.WorkerClose()
 		return
 	}
@@ -27,7 +27,7 @@ func RunWorker() {
 	worker.AddFunction("GetLiveRoomInfo", GetLiveRoomInfo)
 
 	if err = worker.WorkerReady(); err != nil {
-		logger.Error("worker not ready error %s", err)
+		logger.Error("工作程序未就绪异常: %s", err)
 		worker.WorkerClose()
 		return
 	}
@@ -40,7 +40,7 @@ func GetLiveRoomInfo(job wor.Job) ([]byte, error) {
 
 	resp := job.GetResponse()
 	if nil == resp {
-		return []byte(``), fmt.Errorf("response data error")
+		return []byte(``), fmt.Errorf("响应数据错误")
 	}
 
 	if len(resp.ParamsMap) > 0 {
@@ -69,5 +69,5 @@ func GetLiveRoomInfo(job wor.Job) ([]byte, error) {
 		return ret, nil
 	}
 
-	return nil, fmt.Errorf("response data error")
+	return nil, fmt.Errorf("响应数据错误")
 }

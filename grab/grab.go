@@ -39,14 +39,14 @@ func FetchLiveRoomInfo(roomUrl string) (*RoomInfo, string) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("fetch live room info err", err)
+		logger.Error("获取直播间信息异常: %s", err)
 		return nil, ""
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
-		logger.Error("read res body err", err)
+		logger.Error("读取直播间信息异常: %s", err)
 		return nil, ""
 	}
 
@@ -54,14 +54,14 @@ func FetchLiveRoomInfo(roomUrl string) (*RoomInfo, string) {
 	data := pattern.FindSubmatch(body)
 	decodedUrl, err := url.QueryUnescape(string(data[1]))
 	if err != nil {
-		logger.Error("url decode err", err)
+		logger.Error("解析url decode异常: %s", err)
 		return nil, ""
 	}
 
 	var roomInfo RoomInfo
 	err = json.Unmarshal([]byte(decodedUrl), &roomInfo)
 	if err != nil {
-		logger.Error("json unmarshal err", err)
+		logger.Error("json转结构异常: %s", err)
 		return nil, ""
 	}
 	logger.Info("roomid: %s", roomInfo.App.InitialState.RoomStore.RoomInfo.RoomId)

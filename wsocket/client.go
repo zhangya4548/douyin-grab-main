@@ -13,11 +13,9 @@ import (
 	"douyin-grab/grab"
 	"douyin-grab/pkg/logger"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
 )
-
-// --抖音直播间websocket client--//
 
 type DYCookieJar struct {
 	cookies []*http.Cookie
@@ -63,7 +61,7 @@ func (client *WSClient) ConnWSServer(ttwid string) *websocket.Conn {
 	// c, _, err := dialer.Dial(client.WSServerUrl, client.Header)
 	c, _, err := websocket.DefaultDialer.Dial(client.WSServerUrl, client.Header)
 	if err != nil {
-		logger.Error("websocket dial: %s", err)
+		logger.Error("连接抖音Ws异常: %s", err)
 	}
 
 	client.ClientCon = c
@@ -78,7 +76,7 @@ func (client *WSClient) RunWSClient() {
 			for {
 				_, message, err := client.ClientCon.ReadMessage()
 				if err != nil {
-					logger.Error("read error %s", err.Error())
+					logger.Error("读取抖音Ws异常: %s", err.Error())
 					return
 				}
 
@@ -86,10 +84,10 @@ func (client *WSClient) RunWSClient() {
 				wssPackage := &grab.PushFrame{}
 				err = proto.Unmarshal(message, wssPackage)
 				if err != nil {
-					logger.Fatal("unmarshaling proto wssPackage error: ", err)
+					logger.Fatal("解析抖音wssPackage异常: %s", err)
 				}
 				logId := wssPackage.LogId
-				logger.Info("[douyin] logid %d", logId)
+				logger.Info("解析到抖音logid: %s", logId)
 
 				// --gizp decompress--//
 				compressedDataReader := bytes.NewReader(wssPackage.Payload)
@@ -109,7 +107,7 @@ func (client *WSClient) RunWSClient() {
 				payloadPackage := &grab.Response{}
 				err = proto.Unmarshal(decompressed, payloadPackage)
 				if err != nil {
-					logger.Fatal("unmarshaling proto payloadPackage error: ", err)
+					logger.Fatal("解析抖音payloadPackage异常: %s", err)
 				}
 
 				// 返回ack
@@ -140,7 +138,7 @@ func (client *WSClient) RunWSClient() {
 		// heartbeat
 		go func() {
 			for {
-				duration := constv.DEFAULTHEARTBEATTIME
+				duration := constv.DefaultHeartbeatTime
 				timer := time.NewTimer(duration)
 				<-timer.C
 				client.heartBeat()
@@ -154,11 +152,11 @@ func unPackWebcastChatMessage(payload []byte) string {
 	msg := &grab.ChatMessage{}
 	err := proto.Unmarshal(payload, msg)
 	if err != nil {
-		logger.Fatal("unmarshaling proto unPackWebcastChatMessage error: ", err)
+		logger.Fatal("解析抖音直播间弹幕消息异常: %s", err)
 		return ""
 	}
 
-	logger.Info("[unPackWebcastChatMessage] [📧直播间弹幕消息] %s", msg.Content)
+	logger.Info("[📧直播间弹幕消息] %s", msg.Content)
 	return msg.Content
 }
 
@@ -167,7 +165,7 @@ func unPackWebcastLikeMessage(payload []byte) string {
 	msg := &grab.LikeMessage{}
 	err := proto.Unmarshal(payload, msg)
 	if err != nil {
-		logger.Fatal("unmarshaling proto unPackWebcastLikeMessage error: ", err)
+		logger.Fatal("解析抖音直播间点赞消息: %s", err)
 		return ""
 	}
 	// likemsg, err := json.Marshal(msg)
@@ -175,8 +173,7 @@ func unPackWebcastLikeMessage(payload []byte) string {
 	// 	logger.Fatal("json marshal error: ", err)
 	// }
 
-	// logger.Info("[unPackWebcastLikeMessage] [👍直播间点赞消息] json %s", likemsg)
-	logger.Info("[unPackWebcastLikeMessage] [👍直播间点赞消息] %s", msg.User.NickName+"点赞")
+	logger.Info("[👍直播间点赞消息] %s", msg.User.NickName+"点赞")
 	return msg.User.NickName + "点赞"
 }
 
@@ -185,7 +182,7 @@ func unPackWebcastGiftMessage(payload []byte) string {
 	msg := &grab.GiftMessage{}
 	err := proto.Unmarshal(payload, msg)
 	if err != nil {
-		logger.Fatal("unmarshaling proto unPackWebcastGiftMessage error: ", err)
+		logger.Fatal("解析抖音直播间礼物消息: %s", err)
 		return ""
 	}
 	// giftmsg, err := json.Marshal(msg)
@@ -194,7 +191,7 @@ func unPackWebcastGiftMessage(payload []byte) string {
 	// }
 
 	// logger.Info("[unPackWebcastGiftMessage] [🎁直播间礼物消息] json %s", giftmsg)
-	logger.Info("[unPackWebcastGiftMessage] [🎁直播间礼物消息]%s", msg.Common.Describe)
+	logger.Info("[🎁直播间礼物消息] %s", msg.Common.Describe)
 	return msg.Common.Describe
 }
 
@@ -203,7 +200,7 @@ func unPackWebcastMemberMessage(payload []byte) string {
 	msg := &grab.MemberMessage{}
 	err := proto.Unmarshal(payload, msg)
 	if err != nil {
-		logger.Fatal("unmarshaling proto unPackWebcastMemberMessage error: ", err)
+		logger.Fatal("解析抖音直播间进入直播间消息异常: %s", err)
 		return ""
 	}
 	// membermsg, err := json.Marshal(msg)
@@ -212,7 +209,7 @@ func unPackWebcastMemberMessage(payload []byte) string {
 	// }
 
 	// logger.Info("[unPackWebcastMemberMessage] [🚹🚺直播间成员进入消息] json %s", membermsg)
-	logger.Info("[unPackWebcastMemberMessage] [🚹🚺直播间成员进入消息] %s", msg.User.NickName+"进入直播间")
+	logger.Info("[🚹🚺直播间成员进入消息] %s", msg.User.NickName+"进入直播间")
 	return msg.User.NickName + "进入直播间"
 }
 
@@ -224,11 +221,11 @@ func (client *WSClient) sendAck(logId uint64, InternalExt string) {
 	obj.PayloadType = InternalExt
 	data, err := proto.Marshal(obj)
 	if err != nil {
-		logger.Error("send ack error", err)
+		logger.Error("发送Ack到抖音Ws异常: %s", err)
 	}
 
 	client.SendBytes(data)
-	// logger.Info("[sendAck] [🌟发送Ack]")
+	logger.Info("[🌟发送Ack到抖音Ws]")
 }
 
 // 发送心跳
@@ -237,11 +234,11 @@ func (client *WSClient) heartBeat() {
 	obj.PayloadType = "hb"
 	data, err := proto.Marshal(obj)
 	if err != nil {
-		logger.Error("send ack error", err)
+		logger.Error("发送ping心跳到抖音Ws异常: %s", err)
 	}
 
 	client.SendBytes(data)
-	logger.Info("[ping] [💗发送ping心跳]")
+	logger.Info("[💗发送ping心跳到抖音Ws]")
 }
 
 func (client *WSClient) SendBytes(buf []byte) error {
