@@ -83,6 +83,12 @@ func main() {
 		// 消费队列数据
 		// go sendClientSrv.SendStr()
 
+		// go func() {
+		// 	time.Sleep(time.Second * 30)
+		// 	wsclient.Close()
+		// 	fmt.Println("停止了")
+		// }()
+
 		return nil
 	}
 
