@@ -3,13 +3,6 @@ package constv
 import "time"
 
 const (
-	LogMode         = "debug"
-	RuntimeRootPath = ""
-	LogSavePath     = "logs/"
-	LogSaveName     = "log"
-	LogFileExt      = "log"
-	TimeFormat      = "20060102"
-
 	WsPort  = "40001"
 	WebPort = "40000"
 

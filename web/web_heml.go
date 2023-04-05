@@ -206,23 +206,40 @@ func (s *Web) getPageHtml() string {
             }));
         });
 
-		// 停止 ================================================
-		document.getElementById('stop').addEventListener('click', function() {
-		  let xhr = new XMLHttpRequest();
+		function stopRequest() {
+		  const xhr = new XMLHttpRequest();
 		  xhr.open('POST', '/stop', true);
 		  xhr.setRequestHeader('Content-Type', 'application/json');
 		  xhr.onreadystatechange = function() {
 		    if (xhr.readyState === XMLHttpRequest.DONE) {
-				if (xhr.status !== 200) {
-					alert(xhr.response);
-                }else{
-                    alert("成功停止");
-				}
+		      if (xhr.status !== 200) {
+		        alert(xhr.response);
+		      } else {
+		        alert("成功停止");
+		      }
 		    }
 		  };
 		  xhr.send(JSON.stringify({}));
-		});
+		}
 
+
+		// 停止 ================================================
+		document.getElementById('stop').addEventListener('click', function() {
+		  // let xhr = new XMLHttpRequest();
+		  // xhr.open('POST', '/stop', true);
+		  // xhr.setRequestHeader('Content-Type', 'application/json');
+		  // xhr.onreadystatechange = function() {
+		  //   if (xhr.readyState === XMLHttpRequest.DONE) {
+			// 	if (xhr.status !== 200) {
+			// 		alert(xhr.response);
+          //       }else{
+          //           alert("成功停止");
+			// 	}
+		  //   }
+		  // };
+		  // xhr.send(JSON.stringify({}));
+			stopRequest()
+		});
     </script>
 </body>
 </html>

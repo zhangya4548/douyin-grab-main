@@ -2,9 +2,9 @@ package nmid
 
 import (
 	"douyin-grab/grab"
-	"douyin-grab/pkg/logger"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/HughNian/nmid/pkg/model"
@@ -19,7 +19,7 @@ func RunWorker() {
 	worker := wor.NewWorker().SetWorkerName(WorkerName)
 	err := worker.AddServer("tcp", nmidSerAddr)
 	if err != nil {
-		logger.Error("worker init error %s", err)
+		log.Println("worker init error:", err)
 		worker.WorkerClose()
 		return
 	}
@@ -27,7 +27,7 @@ func RunWorker() {
 	worker.AddFunction("GetLiveRoomInfo", GetLiveRoomInfo)
 
 	if err = worker.WorkerReady(); err != nil {
-		logger.Error("worker not ready error %s", err)
+		log.Println("worker not ready error:", err)
 		worker.WorkerClose()
 		return
 	}

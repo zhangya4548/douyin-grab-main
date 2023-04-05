@@ -2,7 +2,6 @@ package queue
 
 import (
 	"container/list"
-	"fmt"
 	"sync"
 )
 
@@ -38,13 +37,11 @@ func (q *QueueSrv) Pop() string {
 func (q *QueueSrv) GetAll() []string {
 	q.lock.Lock() // 加锁，保证并发安全
 	defer q.lock.Unlock()
-	fmt.Println("进来了======", q.queue.Len())
 	result := make([]string, 0, q.queue.Len())
 	for e := q.queue.Front(); e != nil; e = e.Next() {
 		result = append(result, e.Value.(string))
 	}
 	defer q.Empty()
-	fmt.Println("进来了1======", q.queue.Len())
 	return result
 }
 

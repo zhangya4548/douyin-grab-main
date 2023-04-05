@@ -1,8 +1,3 @@
-// @Time : 2023/3/30 7:28 PM
-// @Author : zhangguangqiang
-// @File : send_client
-// @Software: GoLand
-
 package wsocket
 
 import (

@@ -11,13 +11,7 @@ import (
 	"syscall"
 )
 
-const (
-	VERSION = `0.0.1`
-)
-
 func main() {
-	// logger.Init("")
-
 	// 缓存
 	caChe := cache.NewCache()
 	err := caChe.SetDefaultCaChe()
