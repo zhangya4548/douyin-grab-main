@@ -1,9 +1,9 @@
 package grab
 
 import (
-	"douyin-grab/pkg/logger"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -28,7 +28,7 @@ type RoomInfo struct {
 func FetchLiveRoomInfo(roomUrl string) (*RoomInfo, string) {
 	req, err := http.NewRequest("GET", roomUrl, nil)
 	if err != nil {
-		logger.Error("fetch live room info err", err)
+		log.Println("fetch live room info err", err)
 		return nil, ""
 	}
 
@@ -39,14 +39,14 @@ func FetchLiveRoomInfo(roomUrl string) (*RoomInfo, string) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("fetch live room info err", err)
+		log.Println("fetch live room info err", err)
 		return nil, ""
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
-		logger.Error("read res body err", err)
+		log.Println("read res body err", err)
 		return nil, ""
 	}
 
@@ -54,19 +54,19 @@ func FetchLiveRoomInfo(roomUrl string) (*RoomInfo, string) {
 	data := pattern.FindSubmatch(body)
 	decodedUrl, err := url.QueryUnescape(string(data[1]))
 	if err != nil {
-		logger.Error("url decode err", err)
+		log.Println("url decode err", err)
 		return nil, ""
 	}
 
 	var roomInfo RoomInfo
 	err = json.Unmarshal([]byte(decodedUrl), &roomInfo)
 	if err != nil {
-		logger.Error("json unmarshal err", err)
+		log.Println("json unmarshal err", err)
 		return nil, ""
 	}
-	logger.Info("roomid: %s", roomInfo.App.InitialState.RoomStore.RoomInfo.RoomId)
-	logger.Info("title: %s", roomInfo.App.InitialState.RoomStore.RoomInfo.Room.Title)
-	logger.Info("user_count: %s", roomInfo.App.InitialState.RoomStore.RoomInfo.Room.UserCountStr)
+	log.Println("roomid:", roomInfo.App.InitialState.RoomStore.RoomInfo.RoomId)
+	log.Println("title:", roomInfo.App.InitialState.RoomStore.RoomInfo.Room.Title)
+	log.Println("user_count:", roomInfo.App.InitialState.RoomStore.RoomInfo.Room.UserCountStr)
 
 	var ttwid string
 	for _, cookie := range resp.Cookies() {
@@ -74,7 +74,7 @@ func FetchLiveRoomInfo(roomUrl string) (*RoomInfo, string) {
 			ttwid = cookie.Value
 		}
 	}
-	logger.Info("ttwid: %s", ttwid)
+	log.Println("ttwid:", ttwid)
 
 	return &roomInfo, ttwid
 }

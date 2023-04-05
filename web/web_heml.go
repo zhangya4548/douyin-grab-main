@@ -1,8 +1,3 @@
-// @Time : 2023/4/5 18:26
-// @Author : zhangguangqiang
-// @File : web_heml
-// @Software: GoLand
-
 package web
 
 func (s *Web) getPageHtml() string {
@@ -36,7 +31,7 @@ func (s *Web) getPageHtml() string {
         .form-container-2 {
 			    float: left;
 			    margin-left: 5px;
-			    max-height: 600px;
+			    max-height: 500px;
 			    max-width: 900px;
 			    padding: 5px;
 			    background-color: white;
@@ -93,7 +88,7 @@ func (s *Web) getPageHtml() string {
 		.list-box td {
 		  border: 1px solid #ddd;
 		  padding: 8px;
-		  text-align: center;
+		  text-align: left;
 		}
 		.list-box th {
 		  background-color: #f2f2f2;
@@ -104,7 +99,7 @@ func (s *Web) getPageHtml() string {
 		td{
 			text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
 		}
-		h2,th{text-align: center;}
+		h2{text-align: center;}
 		#stop {
 		    background-color: #af4c4c;
 		    color: white;
@@ -171,23 +166,14 @@ func (s *Web) getPageHtml() string {
 			});
 			// 添加事件监听器，当收到服务器发送的消息时触发
 			socket.addEventListener('message', (event) => {
-			 console.log('收到远程数据:', event.data);
-			  const data = JSON.parse(event.data);
+			  console.log('收到远程数据:', event.data);
 			  const tbody = document.querySelector('.list-box tbody');
 			  const row = tbody.insertRow();
 			  const titleCell = row.insertCell();
-			  // const urlCell = row.insertCell();
-			  // const statusCell = row.insertCell();
-			  // const timeCell = row.insertCell();
-			  titleCell.textContent = data.title;
-			  // const link = document.createElement('a');
-			  // link.href = data.url;
-			  // link.target = '_blank';
-			  // link.textContent = '点击查看';
-			  // urlCell.appendChild(link);
-              // statusCell.textContent = data.is_upload;
-			  //statusCell.textContent = data.is_upload ? '√' : '×';
-			  // timeCell.textContent = data.create_time;
+			  titleCell.textContent = event.data;
+
+			  const bax = document.querySelector('.form-container-2');
+			  bax.scrollTop = bax.scrollHeight;	
 			});
 			// 添加事件监听器，当连接关闭时触发
 			socket.addEventListener('close', (event) => {

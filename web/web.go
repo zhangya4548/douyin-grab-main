@@ -3,6 +3,7 @@ package web
 import (
 	"douyin-grab/constv"
 	"douyin-grab/pkg/cache"
+	queue2 "douyin-grab/pkg/queue"
 	"douyin-grab/wsocket"
 	"encoding/json"
 	"fmt"
@@ -13,11 +14,16 @@ import (
 
 type Web struct {
 	cache     *cache.Cache
+	qu        *queue2.QueueSrv
 	douYinSrv *wsocket.WSClient
 }
 
-func NewWeb(cache *cache.Cache, douYinSrv *wsocket.WSClient) *Web {
-	return &Web{cache: cache, douYinSrv: douYinSrv}
+func NewWeb(qu *queue2.QueueSrv, cache *cache.Cache, douYinSrv *wsocket.WSClient) *Web {
+	return &Web{
+		cache:     cache,
+		qu:        qu,
+		douYinSrv: douYinSrv,
+	}
 }
 
 func (s *Web) RunWeb() {
@@ -27,22 +33,22 @@ func (s *Web) RunWeb() {
 	http.HandleFunc("/getData", s.getDataHandler)
 	http.HandleFunc("/stop", s.stopHandler)
 
-	// // 启动WebSocket服务器
-	// http.HandleFunc("/ws", s.wsHandler)
-	// go func() {
-	// 	log.Println("ws启动:", constv.WsPort)
-	// 	err := http.ListenAndServe(":"+constv.WsPort, nil)
-	// 	if err != nil {
-	// 		log.Printf("ws ListenAndServe异常: %s \n", err.Error())
-	// 		return
-	// 	}
-	// }()
+	// 启动WebSocket服务器
+	http.HandleFunc("/ws", s.wsHandler)
+	go func() {
+		log.Println("ws启动:", constv.WsPort)
+		err := http.ListenAndServe(":"+constv.WsPort, nil)
+		if err != nil {
+			log.Printf("ws ListenAndServe异常: %s \n", err.Error())
+			return
+		}
+	}()
 
 	// 启动HTTP服务
 	log.Println("web启动:", constv.WebPort)
 	err := http.ListenAndServe(":"+constv.WebPort, nil)
 	if err != nil {
-		log.Printf("ListenWeb异常: %s \n", err.Error())
+		log.Println("ListenWeb异常:", err.Error())
 	}
 }
 
@@ -59,7 +65,6 @@ func (s *Web) submitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "请求方式错误", http.StatusMethodNotAllowed)
 		return
 	}
-	log.Println("submitHandler参数", r.Body)
 
 	var formData FormData
 	err := json.NewDecoder(r.Body).Decode(&formData)
@@ -67,6 +72,7 @@ func (s *Web) submitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "参数错误", http.StatusBadRequest)
 		return
 	}
+	log.Println("submitHandler参数", formData)
 
 	if formData.LiveUrl == "" {
 		http.Error(w, "直播间url参数不能为空", http.StatusBadRequest)
@@ -122,7 +128,7 @@ func (s *Web) stopHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "请求方式错误", http.StatusMethodNotAllowed)
 		return
 	}
-	log.Println("submitHandler参数", r.Body)
+	log.Println("提交停止了")
 
 	err := s.cache.Set("Stop", "true")
 	if err != nil {
