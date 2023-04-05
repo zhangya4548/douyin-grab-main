@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"douyin-grab/constv"
 	"douyin-grab/pkg/file"
 	"fmt"
 	"log"
@@ -58,7 +59,7 @@ func Init(tag string) {
 	var err error
 	filePath := getLogFilePath()
 	fileName := tag + getLogFileName()
-	logMod = os.Getenv("LOG_MODE")
+	logMod = constv.LogMode
 	F, err = file.MustOpen(fileName, filePath)
 	if err != nil {
 		log.Fatalf("logging.Setup err: %v", err)
@@ -74,9 +75,9 @@ func Init(tag string) {
 	// 这里启动一个携程去定时检测当前时间 是否是同一天
 	go func() {
 		for {
-			last := time.Now().Format(os.Getenv("TIME_FORMAT"))
+			last := time.Now().Format(constv.TimeFormat)
 			time.Sleep(1 * time.Second)
-			now := time.Now().Format(os.Getenv("TIME_FORMAT"))
+			now := time.Now().Format(constv.TimeFormat)
 
 			if last != now {
 				filePath := getLogFilePath()
@@ -91,16 +92,16 @@ func Init(tag string) {
 	}()
 }
 
-//func checkDate() {
-//	curDate := time.Now().Format(os.Getenv("TIME_FORMAT"))
+// func checkDate() {
+//	curDate := time.Now().Format(constv.TimeFormat)
 //	if lastDate != curDate {
 //		Init()
 //	}
-//}
+// }
 
 func File(fileName, msg string) {
 	filePath := getLogFilePath()
-	logMod = os.Getenv("LOG_MODE")
+	logMod = constv.LogMode
 	f, err := file.MustOpen(fileName, filePath)
 	if err != nil {
 		log.Fatalf("logging.Setup err: %v", err)
@@ -181,5 +182,5 @@ func setPrefix(level Level) {
 
 	logger.SetPrefix(logPrefix)
 
-	//checkDate()
+	// checkDate()
 }

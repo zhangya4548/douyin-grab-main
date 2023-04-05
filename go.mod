@@ -15,6 +15,7 @@ require (
 
 require (
 	github.com/SkyAPM/go2sky v1.5.0 // indirect
+	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

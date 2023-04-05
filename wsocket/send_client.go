@@ -38,12 +38,12 @@ func (s *SendClientSrv) SendStr() {
 	for {
 		jsonStr := s.qu.Pop()
 		if jsonStr == "" {
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second * 5)
 			continue
 		}
 		if err := c.WriteMessage(websocket.TextMessage, []byte(jsonStr)); err != nil {
 			fmt.Println("推送数据到服务端异常:", err)
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second * 5)
 			continue
 		}
 		fmt.Println("推送数据到服务端完:", jsonStr)

@@ -3,6 +3,7 @@ package wsocket
 import (
 	"bytes"
 	"compress/gzip"
+	"douyin-grab/pkg/cache"
 	queue2 "douyin-grab/pkg/queue"
 	"io/ioutil"
 	"net/http"
@@ -32,26 +33,58 @@ func (jar *DYCookieJar) Cookies(u *url.URL) []*http.Cookie {
 }
 
 type WSClient struct {
+	Ttwid       string
+	LiveRoomUrl string
 	WSServerUrl string
 	Header      http.Header
 	ClientCon   *websocket.Conn
 	qu          *queue2.QueueSrv
+	cache       *cache.Cache
 }
 
-func NewWSClient(qu *queue2.QueueSrv) *WSClient {
+func (client *WSClient) SetWSServerUrl(WSServerUrl string) {
+	client.WSServerUrl = WSServerUrl
+}
+
+func (client *WSClient) SetLiveRoomUrl(LiveRoomUrl string) {
+	client.LiveRoomUrl = LiveRoomUrl
+}
+
+func NewWSClient(qu *queue2.QueueSrv, cache *cache.Cache) *WSClient {
 	return &WSClient{
-		qu: qu,
+		qu:    qu,
+		cache: cache,
 	}
 }
 
-func (client *WSClient) SetRequestInfo(WSServerUrl string, header http.Header) *WSClient {
-	client.WSServerUrl = WSServerUrl
+func (client *WSClient) Run() {
+	client.SetRequestInfo()
+	client.ConnWSServer()
+	client.RunWSClient()
+}
+
+func (client *WSClient) SetRequestInfo() *WSClient {
+	// 获取直播间信息
+	_, ttwid := grab.FetchLiveRoomInfo(client.LiveRoomUrl)
+
+	// 与直播间进行websocket通信，获取评论数据
+	header := http.Header{}
+	header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36") // 设置User-Agent头
+	header.Set("Origin", constv.DOUYIORIGIN)
+	cookie := &http.Cookie{
+		Name:  "ttwid",
+		Value: ttwid,
+	}
+	header.Add("Cookie", cookie.String())
+
+	// client.WSServerUrl = WSServerUrl
 	client.Header = header
+	client.Ttwid = ttwid
 
 	return client
 }
 
-func (client *WSClient) ConnWSServer(ttwid string) *websocket.Conn {
+func (client *WSClient) ConnWSServer() *websocket.Conn {
 	// 创建一个 CookieJar，设置 Cookie
 	// cookieJar := &DYCookieJar{cookies: []*http.Cookie{
 	// 	&http.Cookie{Name: "ttwid", Value: TTWID},
