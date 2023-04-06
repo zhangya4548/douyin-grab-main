@@ -120,10 +120,13 @@ func (s *Web) getPageHtml() string {
             <label for="input2">直播间wsUrl</label>
             <input type="text" id="input2" name="input2" size="60" placeholder="输入直播间wsUrl">
 			<br/>
+			<a href="https://vocou-www.oss-cn-hangzhou.aliyuncs.com/123.png" target="_blank">点我查看怎么获得url</a>
+			<br/>
             <button type="submit">开始</button>
         </form>
 			<button id="stop">停止</button>
     </div>
+	<!--
 	<div class="form-container-2">
         <h2>弹幕</h2>
         <table class="list-box">
@@ -133,7 +136,7 @@ func (s *Web) getPageHtml() string {
 		    
 		  </tbody>
 		</table>
-    </div>
+    </div>-->
 </div>
     <script>
 		window.onload = function() {
@@ -158,31 +161,31 @@ func (s *Web) getPageHtml() string {
             xhr.send();
 		
 
-			// 实时获取弹幕数据===================================================
-			const socket = new WebSocket("ws://localhost:40001/ws");
-			// 添加事件监听器，当连接建立时触发
-			socket.addEventListener('open', (event) => {
-			  console.log('连接远程成功');
-			});
-			// 添加事件监听器，当收到服务器发送的消息时触发
-			socket.addEventListener('message', (event) => {
-			  console.log('收到远程数据:', event.data);
-			  const tbody = document.querySelector('.list-box tbody');
-			  const row = tbody.insertRow();
-			  const titleCell = row.insertCell();
-			  titleCell.textContent = event.data;
-
-			  const bax = document.querySelector('.form-container-2');
-			  bax.scrollTop = bax.scrollHeight;	
-			});
-			// 添加事件监听器，当连接关闭时触发
-			socket.addEventListener('close', (event) => {
-			  console.log('远程服务端关闭');
-			});
-			// 添加事件监听器，当连接发生错误时触发
-			socket.addEventListener('error', (event) => {
-			  console.error('连接远程异常:', event);
-			});
+			// // 实时获取弹幕数据===================================================
+			// const socket = new WebSocket("ws://localhost:40001/ws");
+			// // 添加事件监听器，当连接建立时触发
+			// socket.addEventListener('open', (event) => {
+			//   console.log('连接远程成功');
+			// });
+			// // 添加事件监听器，当收到服务器发送的消息时触发
+			// socket.addEventListener('message', (event) => {
+			//   console.log('收到远程数据:', event.data);
+			//   const tbody = document.querySelector('.list-box tbody');
+			//   const row = tbody.insertRow();
+			//   const titleCell = row.insertCell();
+			//   titleCell.textContent = event.data;
+			// 
+			//   const bax = document.querySelector('.form-container-2');
+			//   bax.scrollTop = bax.scrollHeight;	
+			// });
+			// // 添加事件监听器，当连接关闭时触发
+			// socket.addEventListener('close', (event) => {
+			//   console.log('远程服务端关闭');
+			// });
+			// // 添加事件监听器，当连接发生错误时触发
+			// socket.addEventListener('error', (event) => {
+			//   console.error('连接远程异常:', event);
+			// });
         };
 
 
@@ -206,6 +209,11 @@ func (s *Web) getPageHtml() string {
             }));
         });
 
+		// 停止 ================================================
+		document.getElementById('stop').addEventListener('click', function() {
+			stopRequest()
+		});
+
 		function stopRequest() {
 		  const xhr = new XMLHttpRequest();
 		  xhr.open('POST', '/stop', true);
@@ -221,25 +229,6 @@ func (s *Web) getPageHtml() string {
 		  };
 		  xhr.send(JSON.stringify({}));
 		}
-
-
-		// 停止 ================================================
-		document.getElementById('stop').addEventListener('click', function() {
-		  // let xhr = new XMLHttpRequest();
-		  // xhr.open('POST', '/stop', true);
-		  // xhr.setRequestHeader('Content-Type', 'application/json');
-		  // xhr.onreadystatechange = function() {
-		  //   if (xhr.readyState === XMLHttpRequest.DONE) {
-			// 	if (xhr.status !== 200) {
-			// 		alert(xhr.response);
-          //       }else{
-          //           alert("成功停止");
-			// 	}
-		  //   }
-		  // };
-		  // xhr.send(JSON.stringify({}));
-			stopRequest()
-		});
     </script>
 </body>
 </html>

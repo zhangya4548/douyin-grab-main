@@ -92,6 +92,16 @@ func (s *Web) submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 有运行的,先停止
+	stopState, err := s.cache.Get("Stop")
+	if err != nil {
+		http.Error(w, "获取Stop设置错误", http.StatusBadRequest)
+		return
+	}
+	if stopState == "false" {
+		s.douYinSrv.Close()
+	}
+
 	// 保存配置
 	err = s.cache.Set("LiveRoomUrl", formData.LiveUrl)
 	if err != nil {
