@@ -30,17 +30,26 @@ func (s *SendClientSrv) SendStr() {
 	}
 	defer c.Close()
 
+	log.Println("连接上远程wsocket服务端")
 	for {
-		jsonStr := s.qu.Pop()
-		if jsonStr == "" {
-			time.Sleep(time.Second * 5)
+		jsonStrS := s.qu.GetAll()
+		if len(jsonStrS) == 0 {
+			time.Sleep(time.Second * 10)
 			continue
 		}
-		if err := c.WriteMessage(websocket.TextMessage, []byte(jsonStr)); err != nil {
-			fmt.Println("推送数据到服务端异常:", err)
-			time.Sleep(time.Second * 5)
-			continue
+		
+		for _, jsonStr := range jsonStrS {
+			if jsonStr == "" {
+				time.Sleep(time.Second * 5)
+				continue
+			}
+			if err := c.WriteMessage(websocket.TextMessage, []byte(jsonStr)); err != nil {
+				fmt.Println("推送数据到服务端异常:", err)
+				time.Sleep(time.Second * 5)
+				continue
+			}
+			fmt.Println("推送数据到服务端完:", jsonStr)
 		}
-		fmt.Println("推送数据到服务端完:", jsonStr)
+
 	}
 }
