@@ -47,13 +47,14 @@ func (s *Web) wsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if stopState == "true" {
 			log.Println("停止中")
-			s.qu.Empty()
+			// s.qu.Empty()
 			time.Sleep(time.Second * 10)
 			continue
 		}
 
 		// 取队列数据
-		messageS := s.qu.GetAll()
+		messageS := []string{}
+		// messageS := s.qu.GetAll()
 		if len(messageS) == 0 {
 			time.Sleep(time.Second * 5)
 			continue

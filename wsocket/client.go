@@ -41,7 +41,7 @@ type WSClient struct {
 	WSServerUrl string
 	Header      http.Header
 	ClientCon   *websocket.Conn
-	qu          *queue2.QueueSrv
+	qu          *queue2.EsQueue
 	cache       *cache.Cache
 }
 
@@ -53,7 +53,7 @@ func (client *WSClient) SetLiveRoomUrl(LiveRoomUrl string) {
 	client.LiveRoomUrl = LiveRoomUrl
 }
 
-func NewWSClient(qu *queue2.QueueSrv, cache *cache.Cache) *WSClient {
+func NewWSClient(qu *queue2.EsQueue, cache *cache.Cache) *WSClient {
 	return &WSClient{
 		qu:    qu,
 		cache: cache,
@@ -144,6 +144,7 @@ func (client *WSClient) RunWSClient() {
 				}
 
 				// 打印各种消息
+				strS := make([]interface{}, 0)
 				for _, msg := range payloadPackage.MessagesList {
 					str := ""
 					if msg.Method == "WebcastChatMessage" {
@@ -158,8 +159,10 @@ func (client *WSClient) RunWSClient() {
 					if msg.Method == "WebcastMemberMessage" {
 						str = unPackWebcastMemberMessage(msg.Payload)
 					}
-					client.qu.Push(str)
+					strS = append(strS, str)
 				}
+
+				client.qu.Puts(strS)
 			}
 		}()
 

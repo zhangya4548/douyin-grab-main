@@ -20,7 +20,8 @@ func main() {
 		return
 	}
 	// 队列
-	qu := queue2.NewQueueSrv()
+	// qu := queue2.NewQueueSrv()
+	qu := queue2.NewQueueSrv2(100)
 
 	// 抖音wsocket客户端
 	wsDouYinClient := wsocket.NewWSClient(qu, caChe)

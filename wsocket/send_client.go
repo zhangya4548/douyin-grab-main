@@ -12,10 +12,10 @@ import (
 )
 
 type SendClientSrv struct {
-	qu *queue2.QueueSrv
+	qu *queue2.EsQueue
 }
 
-func NewSendClientSrv(qu *queue2.QueueSrv) *SendClientSrv {
+func NewSendClientSrv(qu *queue2.EsQueue) *SendClientSrv {
 	return &SendClientSrv{qu: qu}
 }
 
@@ -32,20 +32,31 @@ func (s *SendClientSrv) SendStr() {
 
 	log.Println("连接上远程wsocket服务端")
 	for {
-		jsonStrS := s.qu.GetAll()
-		if len(jsonStrS) == 0 {
+		jsonStrS := make([]interface{}, 100)
+		gets, quantity := s.qu.GetAll(jsonStrS)
+		if gets == 0 {
 			time.Sleep(time.Second * 10)
 			continue
 		}
-		
-		for _, jsonStr := range jsonStrS {
+		fmt.Printf("获取到队列数据: %d, 队列剩余:%d \n", gets, quantity)
+		for _, v := range jsonStrS {
+			if v == nil {
+				continue
+			}
+			// val, ok, quantity := s.qu.Get()
+			// if !ok {
+			// 	time.Sleep(time.Second * 10)
+			// 	continue
+			// }
+			// fmt.Printf("获取到队列数据: %s, 队列剩余:%v \n", val.(string), quantity)
+
+			jsonStr := v.(string)
 			if jsonStr == "" {
-				time.Sleep(time.Second * 5)
 				continue
 			}
 			if err := c.WriteMessage(websocket.TextMessage, []byte(jsonStr)); err != nil {
 				fmt.Println("推送数据到服务端异常:", err)
-				time.Sleep(time.Second * 5)
+				time.Sleep(time.Second * 2)
 				continue
 			}
 			fmt.Println("推送数据到服务端完:", jsonStr)
