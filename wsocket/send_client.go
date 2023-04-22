@@ -20,7 +20,6 @@ func NewSendClientSrv(qu *queue2.QueueSrv) *SendClientSrv {
 }
 
 func (s *SendClientSrv) SendStr() {
-	// 定义websocket客户端
 	u := url.URL{Scheme: "ws", Host: "lwww.wykji.cn:53331", Path: "/wss/dan/mu/conn"}
 	header := make(http.Header)
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), header)
