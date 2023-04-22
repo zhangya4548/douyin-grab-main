@@ -14,11 +14,11 @@ import (
 
 type Web struct {
 	cache     *cache.Cache
-	qu        *queue2.EsQueue
+	qu        *queue2.QueueSrv
 	douYinSrv *wsocket.WSClient
 }
 
-func NewWeb(qu *queue2.EsQueue, cache *cache.Cache, douYinSrv *wsocket.WSClient) *Web {
+func NewWeb(qu *queue2.QueueSrv, cache *cache.Cache, douYinSrv *wsocket.WSClient) *Web {
 	return &Web{
 		cache:     cache,
 		qu:        qu,
