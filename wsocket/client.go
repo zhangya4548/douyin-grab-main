@@ -22,7 +22,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// 抖音直播间websocketClient
 type DYCookieJar struct {
 	cookies []*http.Cookie
 }
@@ -67,10 +66,8 @@ func (client *WSClient) Run() {
 }
 
 func (client *WSClient) SetRequestInfo() *WSClient {
-	// 获取直播间信息
 	_, ttwid := grab.FetchLiveRoomInfo(client.LiveRoomUrl)
 
-	// 与直播间进行websocket通信，获取评论数据
 	header := http.Header{}
 	header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36") // 设置User-Agent头
 	header.Set("Origin", constv.DOUYIORIGIN)
@@ -88,7 +85,6 @@ func (client *WSClient) SetRequestInfo() *WSClient {
 
 func (client *WSClient) ConnWSServer() *websocket.Conn {
 	c, _, err := websocket.DefaultDialer.Dial(client.WSServerUrl, client.Header)
-	// go ne()
 	if err != nil {
 		log.Println("websocket dial:", err)
 	}
@@ -108,7 +104,6 @@ func (client *WSClient) RunWSClient() {
 					return
 				}
 
-				// --push frame--//
 				wssPackage := &grab.PushFrame{}
 				err = proto.Unmarshal(message, wssPackage)
 				if err != nil {
@@ -117,7 +112,6 @@ func (client *WSClient) RunWSClient() {
 				logId := wssPackage.LogId
 				log.Println("[douyin] logid", logId)
 
-				// --gizp decompress--//
 				compressedDataReader := bytes.NewReader(wssPackage.Payload)
 				gzipReader, err := gzip.NewReader(compressedDataReader)
 				if err != nil {
@@ -129,21 +123,16 @@ func (client *WSClient) RunWSClient() {
 				if err != nil {
 					panic(err)
 				}
-				// println(string(decompressed))
-
-				// --response--//
 				payloadPackage := &grab.Response{}
 				err = proto.Unmarshal(decompressed, payloadPackage)
 				if err != nil {
 					log.Println("unmarshaling proto payloadPackage error: ", err)
 				}
 
-				// 返回ack
 				if payloadPackage.NeedAck {
 					client.sendAck(logId, payloadPackage.InternalExt)
 				}
 
-				// 打印各种消息
 				strS := make([]interface{}, 0)
 				for _, msg := range payloadPackage.MessagesList {
 					str := ""
@@ -166,7 +155,6 @@ func (client *WSClient) RunWSClient() {
 			}
 		}()
 
-		// 心跳检测
 		go func() {
 			for {
 				duration := constv.DEFAULTHEARTBEATTIME
@@ -178,7 +166,6 @@ func (client *WSClient) RunWSClient() {
 	}
 }
 
-// 直播间弹幕消息
 func unPackWebcastChatMessage(payload []byte) string {
 	msg := &grab.ChatMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -191,7 +178,6 @@ func unPackWebcastChatMessage(payload []byte) string {
 	return msg.Content
 }
 
-// 直播间点赞消息
 func unPackWebcastLikeMessage(payload []byte) string {
 	msg := &grab.LikeMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -203,7 +189,6 @@ func unPackWebcastLikeMessage(payload []byte) string {
 	return msg.User.NickName + "点赞"
 }
 
-// 直播间礼物消息
 func unPackWebcastGiftMessage(payload []byte) string {
 	msg := &grab.GiftMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -215,7 +200,6 @@ func unPackWebcastGiftMessage(payload []byte) string {
 	return msg.Common.Describe
 }
 
-// 欢迎进入直播间
 func unPackWebcastMemberMessage(payload []byte) string {
 	msg := &grab.MemberMessage{}
 	err := proto.Unmarshal(payload, msg)
@@ -227,7 +211,6 @@ func unPackWebcastMemberMessage(payload []byte) string {
 	return msg.User.NickName + "进入直播间"
 }
 
-// 发送ack
 func (client *WSClient) sendAck(logId uint64, InternalExt string) {
 	obj := &grab.PushFrame{}
 	obj.PayloadType = "ack"
@@ -242,7 +225,6 @@ func (client *WSClient) sendAck(logId uint64, InternalExt string) {
 	log.Println("[sendAck] [🌟发送Ack]")
 }
 
-// 发送心跳
 func (client *WSClient) heartBeat() {
 	obj := &grab.PushFrame{}
 	obj.PayloadType = "hb"

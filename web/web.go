@@ -27,13 +27,11 @@ func NewWeb(qu *queue2.EsQueue, cache *cache.Cache, douYinSrv *wsocket.WSClient)
 }
 
 func (s *Web) RunWeb() {
-	// 定义HTTP路由
 	http.HandleFunc("/", s.formHandler)
 	http.HandleFunc("/submit", s.submitHandler)
 	http.HandleFunc("/getData", s.getDataHandler)
 	http.HandleFunc("/stop", s.stopHandler)
 
-	// 启动WebSocket服务器
 	http.HandleFunc("/ws", s.wsHandler)
 	go func() {
 		log.Println("ws启动:", constv.WsPort)
@@ -44,7 +42,6 @@ func (s *Web) RunWeb() {
 		}
 	}()
 
-	// 启动HTTP服务
 	log.Println("web启动:", constv.WebPort)
 	err := http.ListenAndServe(":"+constv.WebPort, nil)
 	if err != nil {
@@ -92,7 +89,6 @@ func (s *Web) submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 有运行的,先停止
 	stopState, err := s.cache.Get("Stop")
 	if err != nil {
 		http.Error(w, "获取Stop设置错误", http.StatusBadRequest)
@@ -102,7 +98,6 @@ func (s *Web) submitHandler(w http.ResponseWriter, r *http.Request) {
 		s.douYinSrv.Close()
 	}
 
-	// 保存配置
 	err = s.cache.Set("LiveRoomUrl", formData.LiveUrl)
 	if err != nil {
 		http.Error(w, "设置LiveRoomUrl错误", http.StatusBadRequest)
@@ -120,7 +115,6 @@ func (s *Web) submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 运行
 	s.douYinSrv.SetLiveRoomUrl(formData.LiveUrl)
 	s.douYinSrv.SetWSServerUrl(formData.LiveWsUrl)
 	go s.douYinSrv.Run()
@@ -157,7 +151,6 @@ func (s *Web) stopHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 func (s *Web) getDataHandler(w http.ResponseWriter, r *http.Request) {
-	// 获取配置
 	LiveRoomUrl, err := s.cache.Get("LiveRoomUrl")
 	if err != nil {
 		http.Error(w, "获取LiveRoomUrl配置异常", http.StatusInternalServerError)

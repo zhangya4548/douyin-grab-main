@@ -39,7 +39,6 @@ func (c *Cache) SetDefaultCaChe() error {
 }
 
 func (c *Cache) Get(key string) (string, error) {
-	// 获取缓存值
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return "", fmt.Errorf("获取缓存值%s出错：%s", key, err)
@@ -48,7 +47,7 @@ func (c *Cache) Get(key string) (string, error) {
 }
 
 func (c *Cache) Del(key string) error {
-	// 删除缓存值
+
 	err := c.cache.Delete(key)
 	if err != nil {
 		return fmt.Errorf("删除缓存值%s出错：%s", key, err)
@@ -57,7 +56,6 @@ func (c *Cache) Del(key string) error {
 }
 
 func (c *Cache) Set(key, val string) error {
-	// 设置缓存值
 	err := c.cache.Set(key, []byte(val))
 	if err != nil {
 		return fmt.Errorf("设置缓存值%s出错：%s", key, err)

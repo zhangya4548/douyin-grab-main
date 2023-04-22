@@ -1,8 +1,3 @@
-// @Time : 2023/4/7 3:09 PM
-// @Author : zhangguangqiang
-// @File : es_queue
-// @Software: GoLand
-
 package queue
 
 import (
@@ -17,7 +12,6 @@ type esCache struct {
 	value interface{}
 }
 
-// lock free queue
 type EsQueue struct {
 	capaciity uint32
 	capMod    uint32
@@ -70,7 +64,6 @@ func (q *EsQueue) Quantity() uint32 {
 	return quantity
 }
 
-// put queue functions
 func (q *EsQueue) Put(val interface{}) (ok bool, quantity uint32) {
 	var putPos, putPosNew, getPos, posCnt uint32
 	var cache *esCache
@@ -111,7 +104,6 @@ func (q *EsQueue) Put(val interface{}) (ok bool, quantity uint32) {
 	}
 }
 
-// puts queue functions
 func (q *EsQueue) Puts(values []interface{}) (puts, quantity uint32) {
 	var putPos, putPosNew, getPos, posCnt, putCnt uint32
 	capMod := q.capMod
@@ -159,7 +151,6 @@ func (q *EsQueue) Puts(values []interface{}) (puts, quantity uint32) {
 	return putCnt, posCnt + putCnt
 }
 
-// get queue functions
 func (q *EsQueue) Get() (val interface{}, ok bool, quantity uint32) {
 	var putPos, getPos, getPosNew, posCnt uint32
 	var cache *esCache
@@ -201,7 +192,6 @@ func (q *EsQueue) Get() (val interface{}, ok bool, quantity uint32) {
 	}
 }
 
-// gets queue functions
 func (q *EsQueue) GetAll(values []interface{}) (gets, quantity uint32) {
 	var putPos, getPos, getPosNew, posCnt, getCnt uint32
 	capMod := q.capMod
@@ -251,7 +241,6 @@ func (q *EsQueue) GetAll(values []interface{}) (gets, quantity uint32) {
 	return getCnt, posCnt - getCnt
 }
 
-// round 到最近的2的倍数
 func minQuantity(v uint32) uint32 {
 	v--
 	v |= v >> 1

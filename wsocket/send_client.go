@@ -21,8 +21,6 @@ func NewSendClientSrv(qu *queue2.EsQueue) *SendClientSrv {
 }
 
 func (s *SendClientSrv) SendStr() {
-	// 定义websocket客户端
-	// u := url.URL{Scheme: "ws", Host: "lwww.wykji.cn:53331", Path: "/wss/dan/mu/conn"}
 	wsRemoteHost := os.Getenv("WsRemoteHost")
 	wsRemotePath := os.Getenv("WsRemotePath")
 	u := url.URL{Scheme: "ws", Host: wsRemoteHost, Path: wsRemotePath}
@@ -47,12 +45,6 @@ func (s *SendClientSrv) SendStr() {
 			if v == nil {
 				continue
 			}
-			// val, ok, quantity := s.qu.Get()
-			// if !ok {
-			// 	time.Sleep(time.Second * 10)
-			// 	continue
-			// }
-			// fmt.Printf("获取到队列数据: %s, 队列剩余:%v \n", val.(string), quantity)
 
 			jsonStr := v.(string)
 			if jsonStr == "" {
