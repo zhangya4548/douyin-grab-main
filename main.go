@@ -29,7 +29,7 @@ func main() {
 	// 远程wsocket客户端
 	sendClientSrv := wsocket.NewSendClientSrv(qu)
 	sendClientSrv = sendClientSrv
-	go sendClientSrv.SendStr() // todo 开启
+	go sendClientSrv.SendStr() // todo 开启1
 
 	// 本地web服务
 	webSrv := web.NewWeb(qu, caChe, wsDouYinClient)
