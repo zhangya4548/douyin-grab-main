@@ -9,11 +9,20 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load("./.env")
+	if err != nil {
+		fmt.Println("读取.env文件异常:", err)
+		return
+	}
+	fmt.Println("远程配置", os.Getenv("WsRemoteHost"), os.Getenv("WsRemotePath"))
+
 	caChe := cache.NewCache()
-	err := caChe.SetDefaultCaChe()
+	err = caChe.SetDefaultCaChe()
 	if err != nil {
 		fmt.Println("初始化默认cache异常:", err)
 		return

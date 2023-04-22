@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -20,7 +21,10 @@ func NewSendClientSrv(qu *queue2.QueueSrv) *SendClientSrv {
 }
 
 func (s *SendClientSrv) SendStr() {
-	u := url.URL{Scheme: "ws", Host: "lwww.wykji.cn:53331", Path: "/wss/dan/mu/conn"}
+	// u := url.URL{Scheme: "ws", Host: "lwww.wykji.cn:53331", Path: "/wss/dan/mu/conn"}
+	wsRemoteHost := os.Getenv("WsRemoteHost")
+	wsRemotePath := os.Getenv("WsRemotePath")
+	u := url.URL{Scheme: "ws", Host: wsRemoteHost, Path: wsRemotePath}
 	header := make(http.Header)
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), header)
 	if err != nil {
